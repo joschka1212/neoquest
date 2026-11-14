@@ -34,7 +34,7 @@
   },
   "keywords": [
     "treasure-hunt",
-    "gps-tracking", 
+    "gps-tracking",
     "express",
     "postgresql",
     "flutter-backend"
@@ -43,5 +43,9 @@
   "license": "MIT",
   "engines": {
     "node": ">=18.0.0"
+  },
+  "allowScripts": {
+    "bcrypt@5.1.1": true,
+    "sharp@0.34.3": true
   }
 }
