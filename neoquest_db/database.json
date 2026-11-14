@@ -1,0 +1,66 @@
+{
+  "defaultEnv": "dev",
+  "dev": {
+    "driver": "pg",
+    "host": {
+      "ENV": "DB_HOST"
+    },
+    "port": {
+      "ENV": "DB_PORT"
+    },
+    "database": {
+      "ENV": "DB_NAME"
+    },
+    "user": {
+      "ENV": "DB_ADMIN_USER"
+    },
+    "password": {
+      "ENV": "DB_ADMIN_PASSWORD"
+    },
+    "schema": {
+      "ENV": "DB_SCHEMA"
+    },
+    "searchPath": [
+      "neoquest",
+      "public"
+    ],
+    "multipleStatements": true
+  },
+  "test": {
+    "driver": "pg",
+    "host": {
+      "ENV": "DB_HOST"
+    },
+    "port": {
+      "ENV": "DB_PORT"
+    },
+    "database": "neoquest_test",
+    "user": {
+      "ENV": "DB_ADMIN_USER"
+    },
+    "password": {
+      "ENV": "DB_ADMIN_PASSWORD"
+    },
+    "multipleStatements": true
+  },
+  "production": {
+    "driver": "pg",
+    "host": {
+      "ENV": "DB_HOST"
+    },
+    "port": {
+      "ENV": "DB_PORT"
+    },
+    "database": {
+      "ENV": "DB_NAME"
+    },
+    "user": {
+      "ENV": "DB_USER"
+    },
+    "password": {
+      "ENV": "DB_PASSWORD"
+    },
+    "ssl": true,
+    "multipleStatements": true
+  }
+}

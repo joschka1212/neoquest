@@ -1,0 +1,31 @@
+{
+  "name": "neoquest-db",
+  "version": "1.0.0",
+  "description": "NeoQuest PostgreSQL-Schema, Migrationen und Setup",
+  "scripts": {
+    "setup:db": "node scripts/setup-database.js setup",
+    "db:grant": "node scripts/setup-database.js grant",
+    "migrate:up": "node -r dotenv/config node_modules/db-migrate/bin/db-migrate up && node scripts/setup-database.js grant",
+    "migrate:down": "node -r dotenv/config node_modules/db-migrate/bin/db-migrate down",
+    "migrate:reset": "node -r dotenv/config node_modules/db-migrate/bin/db-migrate reset",
+    "migrate:create": "node -r dotenv/config node_modules/db-migrate/bin/db-migrate create",
+    "migrate:check": "node -r dotenv/config node_modules/db-migrate/bin/db-migrate check",
+    "migrate:status": "node -r dotenv/config node_modules/db-migrate/bin/db-migrate check"
+  },
+  "dependencies": {
+    "pg": "^8.11.0",
+    "dotenv": "^16.1.4"
+  },
+  "devDependencies": {
+    "db-migrate": "^0.11.14",
+    "db-migrate-pg": "^1.5.2"
+  },
+  "keywords": [
+    "treasure-hunt",
+    "gps",
+    "postgresql",
+    "express"
+  ],
+  "author": "Your Name",
+  "license": "MIT"
+}
