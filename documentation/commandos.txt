@@ -1,0 +1,28 @@
+=======================================
+SERVER
+=======================================
+
+// Startet den Server
+cd c:\neoquest\neoquest_server
+npm run dev
+
+
+========================================
+CLIENT
+========================================
+
+cd c:\neoquest\neoquest_app
+
+// Zeigt die verfügbaren Emulatoren
+flutter emulators
+
+//Startet den emulator:
+flutter emulators --launch Pixel_7
+
+
+// im Folder der App:Baut das APK für mobile device
+flutter build apk --release
+
+
+// Startet das APK auf dem emulator 
+flutter run -d emulator-5554 --dart-define=CAMERA_ENABLED=true

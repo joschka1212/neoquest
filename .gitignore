@@ -1,0 +1,61 @@
+# =========================================================
+# NeoQuest – nur Quellcode und App-Assets gehören ins Repo
+# =========================================================
+
+# --- Geheimnisse / lokale Konfiguration -------------------
+.env
+.env.*
+!.env.example
+**/android/local.properties
+**/android/key.properties
+*.keystore
+*.jks
+
+# --- Node.js (Server + DB-Migrationen) --------------------
+node_modules/
+npm-debug.log*
+yarn-error.log*
+
+# --- Laufzeitdaten des Servers (bleiben lokal) ------------
+neoquest_server/logs/
+neoquest_server/uploads/
+neoquest_server/temp/
+*.log
+
+# --- Flutter / Dart ----------------------------------------
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.pub-cache/
+.pub/
+**/build/
+**/android/.gradle/
+**/android/.kotlin/
+**/android/app/debug/
+**/android/app/profile/
+**/android/app/release/
+**/linux/flutter/ephemeral/
+**/windows/flutter/ephemeral/
+**/ios/Flutter/.last_build_id
+app.*.symbols
+app.*.map.json
+
+# --- Datenbank-Dumps / lokale DB-Dateien -------------------
+*.dump
+*.backup
+*.sql.gz
+pgdata/
+
+# --- IDEs / OS --------------------------------------------
+.idea/
+*.iml
+*.ipr
+*.iws
+.vscode/*
+!.vscode/settings.json
+!.vscode/launch.json
+!.vscode/extensions.json
+.claude/settings.local.json
+.DS_Store
+Thumbs.db
+desktop.ini
