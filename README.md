@@ -1,240 +1,98 @@
-# neoquest
-Repository for a geo tracking game
+# NeoQuest
 
-# NeoQuest Server - Schatzsuche App Backend
+Geo-Schatzsuche für das lokale Netz: Spieler:innen laufen mit einer Flutter-App GPS-Checkpoints ab, lösen Rätsel und laden Fotos, Routen und Ergebnisse hoch. Server und Datenbank laufen auf einem Windows-Rechner im LAN, eine Internetverbindung ist nicht nötig.
 
-PostgreSQL-basierte Serverkomponente für eine Flutter-Schatzsuche-App mit Geotracking, entwickelt für lokale LAN-Umgebungen.
+## Aufbau
 
-## 🚀 Quick Start
+| Ordner | Technik | Zweck |
+|---|---|---|
+| `neoquest_app/` | Flutter / Dart | Client-App (Android, Windows, Web) |
+| `neoquest_server/` | Node.js, Express 5 | REST-API auf Port 3000, Einstieg `src/server.js` |
+| `neoquest_db/` | PostgreSQL 18, db-migrate | Schema `neoquest`, Migrationen, Setup |
+| `documentation/` | Text / Markdown / HTML | Installationsanleitung, Befehle, Designstudien |
 
-### 1. Voraussetzungen
+## Voraussetzungen
 
-- **Node.js** >= 16.x
-- **PostgreSQL** >= 12.x  
-- **npm** oder **yarn**
+- PostgreSQL 18
+- Node.js ab Version 18 und npm
+- Flutter SDK (Dart ab 3.8) für die App
 
-### 2. Installation
+## Einrichtung
 
-```bash
-# Repository klonen
-git clone <repository-url>
-cd neoquest-server
+### 1. Datenbank
 
-# Dependencies installieren
+```powershell
+cd neoquest_db
 npm install
-
-# Environment-Datei erstellen
-cp .env.example .env
-# .env bearbeiten und Datenbankzugangsdaten anpassen
+Copy-Item .env.example .env     # Zugangsdaten eintragen
+npm run setup:db                # Datenbank, User neoquest_app und Schema anlegen
+npm run migrate:up              # Migrationen ausführen, danach Rechte setzen
 ```
 
-### 3. Datenbank Setup
+Details: [documentation/neoquest-db-installation-guide.md](documentation/neoquest-db-installation-guide.md)
 
-```bash
-# Automatisches Setup (erstellt DB, Schema, User)
-npm run setup:db
+### 2. Server
 
-# Migrationen ausführen
-npm run migrate:up
-
-# Migration Status prüfen
-npm run migrate:status
+```powershell
+cd neoquest_server
+Copy-Item .env.example .env     # DB_PASSWORD wie in neoquest_db/.env, eigenes JWT_SECRET
+cd ..
+.\start-server.ps1              # installiert bei Bedarf Pakete und startet mit nodemon
+Invoke-RestMethod http://localhost:3000/health
 ```
 
-### 4. Server starten
+Der Server lauscht auf `0.0.0.0`, damit Handys im LAN ihn erreichen. PostgreSQL lauscht nur auf `localhost`.
 
-```bash
-# Development
-npm run dev
+### 3. App
 
-# Production
-npm start
+```powershell
+cd neoquest_app
+flutter pub get
+flutter run
 ```
 
-## 📁 Projektstruktur
+Weitere Befehle: [documentation/commandos.txt](documentation/commandos.txt)
 
-```
-neoquest-server/
-├── migrations/                 # db-migrate Dateien
-│   ├── 20240627000001-init-neoquest-schema.js
-│   ├── 20240627000002-add-indexes.js
-│   └── 20240627000003-seed-data.js
-├── scripts/                   # Setup & Utility Scripts
-│   └── setup-database.js
-├── database.json             # db-migrate Konfiguration
-├── .env.template             # Environment Template
-└── package.json
-```
+## Server-API
 
-## 🗄️ Datenbankschema
+Alle Endpunkte liegen unter `/api/…`:
 
-### Haupt-Tabellen
+| Bereich | Präfix | Zweck |
+|---|---|---|
+| Auth | `/api/auth` | Registrierung, Token verknüpfen und prüfen |
+| Spiel | `/api/game` | Spieldaten, Medien, Konfiguration, Rangliste |
+| Session | `/api/session` | gemeinsamer Spielstart, Countdown, Status |
+| Missionen | `/api/mission` | Route und Fotos hochladen, Abschluss, Rangliste |
+| Uploads | `/api/upload` | Ergebnisse, GPS-Tracks, Fotos |
+| Level 1 | `/api/level1` | einfaches Rennen: Tokens, Inhalte, Ergebnisse |
+| ESP32 | `/api/esp32` | Hardware-Checkpoints steuern |
+| Admin | `/api/admin` | Tokens, Spieler:innen, Statistik, Systemstatus |
 
-- **`players`** - Spieler:innen mit QR-Tokens
-- **`games`** - Spielszenarien/Schatzsuchen
-- **`checkpoints`** - GPS-Punkte mit QR-Codes
-- **`puzzles`** - Rätsel mit Antworten
-- **`gps_tracks`** - GPS-Verlauf der Spieler:innen
-- **`upload_queue`** - Warteschlange für Uploads
+Dazu kommen `/health` sowie die statischen Ordner `/media` (Spiel-Assets) und `/uploads` (hochgeladene Dateien).
 
-### Beispiel-Spiel: Möllersdorf Schatzsuche
+## Datenbank
 
-**Zentrum:** Münchendorferstrasse 12, Möllersdorf  
+Das Schema `neoquest` enthält unter anderem:
 
-**Checkpoints:**
-1. **Start** - Münchendorferstrasse 12 (Zentrum)
-2. **Brücke über Mühlbach** - Brückengasse
-3. **Bahnschranken** - Münchendorferstrasse  
-4. **Finish** - Bahnhaltestelle Möllersdorf Aspangbahn
+- **Spiel:** `games`, `game_config`, `checkpoints`, `puzzles`, `hints`, `media_files`
+- **Spieler:innen:** `players`, `player_games`, `checkpoint_visits`, `puzzle_attempts`, `hint_usage`
+- **Sessions:** `game_sessions`, `coordinated_sessions`, `session_participants`, `session_events`
+- **Uploads und Ergebnisse:** `gps_tracks`, `photo_uploads`, `mission_uploads`, `mission_results`, `upload_queue`
+- **Auswertung:** `leaderboards`, `game_statistics`, `quiz_results`
+- **Hardware:** `esp`
 
-## 🛠️ Available Scripts
+Die Seed-Migration legt Beispielspiele an, darunter die **Möllersdorf Schatzsuche** mit vier Checkpoints (Start Münchendorferstrasse 12, Brücke über den Mühlbach, Bahnschranken, Ziel Bahnhaltestelle Aspangbahn).
 
-### Database Management
-```bash
-npm run migrate:up        # Alle Migrationen ausführen
-npm run migrate:down      # Letzte Migration rückgängig
-npm run migrate:reset     # Alle Migrationen rückgängig
-npm run migrate:create    # Neue Migration erstellen
-npm run setup:db          # Komplettes DB-Setup
+Schema-Änderungen nur als neue Migration:
+
+```powershell
+cd neoquest_db
+npm run migrate:create -- <name>
 ```
 
-### Development
-```bash
-npm run dev              # Development Server mit Hot-Reload
-npm start                # Production Server
-```
+## Sicherheit
 
-## 🔧 Konfiguration
-
-### Environment Variables (.env)
-
-> Zugangsdaten stehen **nur** in der lokalen `.env` (nicht im Repo). Vorlage: `.env.example`.
-
-```bash
-# Database
-DB_HOST=localhost
-DB_PORT=5432
-DB_NAME=neoquest
-DB_USER=neoquest_app
-DB_PASSWORD=<nur in der lokalen .env>
-DB_SCHEMA=neoquest
-
-# Server
-PORT=3000
-NODE_ENV=development
-
-# Security
-JWT_SECRET=<nur in der lokalen .env>
-ALLOWED_IP_RANGES=192.168.1.0/24
-
-# ESP32
-ESP32_UDP_PORT=8888
-ESP32_BROADCAST_IP=192.168.1.255
-```
-
-### Database Configuration (database.json)
-
-Unterstützt mehrere Umgebungen:
-- **dev** - Development (lokale DB)
-- **test** - Testing (separate Test-DB)  
-- **production** - Production (Environment Variables)
-
-## 📊 Test-Daten
-
-Das System kommt mit vorgefertigten Test-Daten:
-
-### Spieler:innen
-- `QR_TOKEN_ABC123` - Max Mustermann  
-- `QR_TOKEN_DEF456` - Lisa Schmidt
-- `QR_TOKEN_GHI789` - Tom Weber
-- `QR_TOKEN_JKL012` - Anna Müller
-- `QR_TOKEN_MNO345` - Klaus Bauer
-
-### Spiele
-1. **Möllersdorf Schatzsuche** - Lokale Tour um Münchendorferstrasse
-2. **Wien Alternative Tour** - Wien-Tour für Vergleichstests  
-3. **Traiskirchen Geschichte** - Historische Tour
-
-## 🔄 Migration Workflow
-
-### Neue Migration erstellen
-```bash
-npm run migrate:create add-new-feature
-```
-
-### Migration entwickeln
-```javascript
-// migrations/TIMESTAMP-add-new-feature.js
-exports.up = function(db) {
-  return db.runSql(`
-    -- SQL für "up" Migration
-    ALTER TABLE neoquest.games ADD COLUMN new_field VARCHAR(255);
-  `);
-};
-
-exports.down = function(db) {
-  return db.runSql(`
-    -- SQL für "down" Migration  
-    ALTER TABLE neoquest.games DROP COLUMN new_field;
-  `);
-};
-```
-
-### Migration ausführen
-```bash
-npm run migrate:up
-```
-
-## 🚨 Troubleshooting
-
-### Database Connection Issues
-```bash
-# PostgreSQL Service prüfen
-sudo systemctl status postgresql
-
-# Connection testen
-psql -h localhost -U postgres -d neoquest
-
-# Logs prüfen
-tail -f /var/log/postgresql/postgresql-*.log
-```
-
-### Migration Problems
-```bash
-# Migration Status prüfen
-npm run migrate:status
-
-# Letzte Migration rückgängig
-npm run migrate:down
-
-# Reset und neu aufbauen
-npm run migrate:reset
-npm run migrate:up
-```
-
-### Schema Issues
-```bash
-# Schema existiert?
-psql -h localhost -U postgres -d neoquest -c "\dn"
-
-# Tabellen im Schema prüfen
-psql -h localhost -U postgres -d neoquest -c "\dt neoquest.*"
-```
-
-## 🔐 Sicherheit
-
-- **LAN-only**: Server nur für lokale IP-Bereiche konfiguriert
-- **Token-basiert**: QR-Codes enthalten eindeutige Spieler-Tokens
-- **No Internet**: Funktioniert vollständig offline im LAN
-- **Prepared Statements**: SQL-Injection Schutz
-
-## 📱 Flutter App Integration
-
-Der Server stellt folgende APIs bereit:
-
-- `POST /register` - Spieler:in registrieren
-- `GET /getGameData` - Spielpaket laden  
-- `POST /uploadResults` - Ergebnisse hochladen
-- `GET /getQueueStatus` - Upload-Status prüfen
-- `POST /triggerEspCommand` - ESP32 steuern
-- `GET /admin/getRoutes` - Admin-Übersicht
+- Zugangsdaten stehen nur in `neoquest_db/.env` und `neoquest_server/.env` (gitignored). Vorlagen: `.env.example`.
+- Der Server nutzt den eingeschränkten DB-User `neoquest_app` (nur SELECT/INSERT/UPDATE/DELETE, kein DDL).
+- Zugriffe sind auf die IP-Bereiche aus `ALLOWED_IP_RANGES` beschränkt, `/api/` hat ein Rate-Limit.
+- Laufzeitdaten (`uploads/`, `logs/`, `temp/`) bleiben lokal und kommen nicht ins Repo.

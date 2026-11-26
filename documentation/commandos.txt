@@ -2,27 +2,55 @@
 SERVER
 =======================================
 
-// Startet den Server
-cd c:\neoquest\neoquest_server
-npm run dev
+// Startet den Server (nodemon, Neustart bei Code-Aenderungen)
+cd C:\dev\neoquest
+.\start-server.ps1
+
+// Ohne nodemon
+.\start-server.ps1 -Prod
+
+// Health-Check
+Invoke-RestMethod http://localhost:3000/health
+
+// Lint und Tests
+cd C:\dev\neoquest\neoquest_server
+npm run lint
+npm test
+
+
+=======================================
+DATENBANK
+=======================================
+
+cd C:\dev\neoquest\neoquest_db
+
+// Migrationen ausfuehren (setzt danach die Rechte fuer neoquest_app)
+npm run migrate:up
+
+// Offene Migrationen anzeigen
+npm run migrate:status
+
+// Neue Migration anlegen
+npm run migrate:create -- <name>
 
 
 ========================================
 CLIENT
 ========================================
 
-cd c:\neoquest\neoquest_app
+cd C:\dev\neoquest\neoquest_app
 
-// Zeigt die verfügbaren Emulatoren
+// Abhaengigkeiten holen
+flutter pub get
+
+// Zeigt die verfuegbaren Emulatoren
 flutter emulators
 
-//Startet den emulator:
+// Startet den Emulator
 flutter emulators --launch Pixel_7
 
+// Startet die App auf dem Emulator
+flutter run -d emulator-5554
 
-// im Folder der App:Baut das APK für mobile device
+// Baut das APK fuer ein echtes Handy
 flutter build apk --release
-
-
-// Startet das APK auf dem emulator 
-flutter run -d emulator-5554 --dart-define=CAMERA_ENABLED=true
