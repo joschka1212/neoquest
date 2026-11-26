@@ -38,6 +38,7 @@ const { body, validationResult } = require('express-validator');
 const { asyncHandler } = require('../middleware/errorHandler');
 const { query } = require('../config/database');
 const logger = require('../utils/logger');
+const { requireAdmin } = require('../middleware/adminAuth');
 const {
   generatePlayerToken,
   generateMultipleTokens,
@@ -45,36 +46,6 @@ const {
 } = require('../utils/tokenGenerator');
 
 const router = express.Router();
-
-// ===============================================
-// ADMIN AUTHENTICATION MIDDLEWARE
-// ===============================================
-
-/**
- * Admin authentication middleware
- */
-function requireAdmin(req, res, next) {
-  // Safely extract admin key from different sources
-  const adminKey = req.headers['x-admin-key'] || 
-                   (req.body && req.body.admin_key) || 
-                   req.query.admin_key;
-  
-  if (!adminKey || adminKey !== (process.env.ADMIN_KEY || 'admin123')) {
-    return res.status(403).json({
-      success: false,
-      error: 'Admin access required',
-      message: 'Provide valid admin key in header, body, or query parameter'
-    });
-  }
-  
-  logger.info('Admin access granted', {
-    endpoint: req.path,
-    method: req.method,
-    ip: req.ip
-  });
-  
-  next();
-}
 
 // ===============================================
 // NEUE TOKEN-MANAGEMENT FEATURES

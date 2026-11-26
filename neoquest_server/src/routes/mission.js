@@ -29,6 +29,7 @@ const fs = require('fs').promises;
 
 // Database connection: gemeinsamer Pool aus config/database.js (Zugangsdaten aus .env)
 const { pool } = require('../config/database');
+const { requireAdmin } = require('../middleware/adminAuth');
 
 // Configure multer for mission uploads
 const storage = multer.diskStorage({
@@ -599,7 +600,7 @@ async function getLeaderboard(req, res, gameId) {
  * GET /api/mission/admin/all-status
  * Get upload status for all players (admin endpoint)
  */
-router.get('/admin/all-status', async (req, res) => {
+router.get('/admin/all-status', requireAdmin, async (req, res) => {
   const client = await pool.connect();
   
   try {

@@ -26,6 +26,7 @@ const router = express.Router();
 
 // Database connection: gemeinsamer Pool aus config/database.js (Zugangsdaten aus .env)
 const { pool } = require('../config/database');
+const { requireAdmin } = require('../middleware/adminAuth');
 
 // File upload configuration
 const storage = multer.diskStorage({
@@ -54,23 +55,15 @@ const upload = multer({
  * POST /api/level1/admin/generate-tokens
  * Generate QR code tokens for a specific game
  */
-router.post('/admin/generate-tokens', async (req, res) => {
+router.post('/admin/generate-tokens', requireAdmin, async (req, res) => {
     const client = await pool.connect();
-    
+
     try {
-        const { 
-            game_id, 
-            count = 1, 
-            admin_key = 'admin123'
+        const {
+            game_id,
+            count = 1
         } = req.body;
-        
-        if (admin_key !== process.env.ADMIN_KEY && admin_key !== 'admin123') {
-            return res.status(403).json({ 
-                success: false, 
-                error: 'Invalid admin key' 
-            });
-        }
-        
+
         const gameResult = await client.query(`
             SELECT id, name, game_type, complexity_level, is_active 
             FROM neoquest.games 
@@ -155,7 +148,7 @@ router.post('/admin/generate-tokens', async (req, res) => {
  * GET /api/level1/admin/qr/:token
  * Generate QR code image for a token
  */
-router.get('/admin/qr/:token', async (req, res) => {
+router.get('/admin/qr/:token', requireAdmin, async (req, res) => {
     try {
         const { token } = req.params;
         const { format = 'json', size = '200' } = req.query;
@@ -209,18 +202,10 @@ router.get('/admin/qr/:token', async (req, res) => {
  * GET /api/level1/admin/tokens/:game_id
  * List all tokens for a specific game
  */
-router.get('/admin/tokens/:game_id', async (req, res) => {
+router.get('/admin/tokens/:game_id', requireAdmin, async (req, res) => {
     try {
         const { game_id } = req.params;
-        const { admin_key = 'admin123' } = req.query;
-        
-        if (admin_key !== process.env.ADMIN_KEY && admin_key !== 'admin123') {
-            return res.status(403).json({ 
-                success: false, 
-                error: 'Invalid admin key' 
-            });
-        }
-        
+
         const result = await pool.query(`
             SELECT p.id, p.token, p.name, p.qr_code_content, p.registered_at, p.is_active,
                    g.name as game_name
@@ -262,18 +247,10 @@ router.get('/admin/tokens/:game_id', async (req, res) => {
  * DELETE /api/level1/admin/token/:token  
  * Deactivate a specific token
  */
-router.delete('/admin/token/:token', async (req, res) => {
+router.delete('/admin/token/:token', requireAdmin, async (req, res) => {
     try {
         const { token } = req.params;
-        const { admin_key = 'admin123' } = req.body;
-        
-        if (admin_key !== process.env.ADMIN_KEY && admin_key !== 'admin123') {
-            return res.status(403).json({ 
-                success: false, 
-                error: 'Invalid admin key' 
-            });
-        }
-        
+
         const result = await pool.query(`
             UPDATE neoquest.players 
             SET is_active = false 

@@ -138,9 +138,21 @@ app.use(helmet({
 }));
 
 // Rate limiting
+// Ausgenommen vom allgemeinen Limit:
+// - /session/status: die App fragt im Warteraum und beim Countdown alle 1-2 s ab;
+//   mit 60-80 Spieler:innen waere jedes Limit pro IP sofort erschoepft.
+// - Admin-Pfade: dafuer gilt das eigene adminLimiter (bzw. kein Limit in development).
+//   Vorher galt das allgemeine Limit trotzdem, weil app.use(..., next) nichts ueberspringt.
+const RATE_LIMIT_EXEMPT = [
+  /^\/session\/status\/?$/,
+  /^\/admin\//,
+  /^\/session\/admin\//
+];
+
 const limiter = rateLimit({
   windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS) || 15 * 60 * 1000,
-  max: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS) || 100,
+  max: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS) || 1000,
+  skip: (req) => RATE_LIMIT_EXEMPT.some((re) => re.test(req.path)),
   message: {
     error: 'Too many requests from this IP, please try again later',
     retryAfter: '15 minutes'
@@ -160,11 +172,8 @@ const adminLimiter = rateLimit({
   legacyHeaders: false
 });
 
-// Development mode - disable rate limits for admin
-if (process.env.NODE_ENV === 'development') {
-  app.use('/api/session/admin/', (req, res, next) => next());
-  app.use('/api/admin/', (req, res, next) => next());
-} else {
+// Admin-Limit nur ausserhalb von development (vom allgemeinen Limit sind Admin-Pfade ausgenommen)
+if (process.env.NODE_ENV !== 'development') {
   app.use('/api/session/admin/', adminLimiter);
   app.use('/api/admin/', adminLimiter);
 }

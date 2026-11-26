@@ -19,6 +19,7 @@ const { validateToken } = require('../utils/tokenGenerator');
 
 // Database connection: gemeinsamer Pool aus config/database.js (Zugangsdaten aus .env)
 const { pool } = require('../config/database');
+const { requireAdmin } = require('../middleware/adminAuth');
 
 // Session status enum
 const SESSION_STATUS = {
@@ -174,22 +175,6 @@ async function requireValidToken(req, res, next) {
   }
 
   req.player = validation.player;
-  next();
-}
-
-/**
- * Admin authentication middleware
- */
-function requireAdmin(req, res, next) {
-  const adminKey = req.headers['x-admin-key'] || req.body.admin_key || req.query.admin_key;
-  
-  if (!adminKey || adminKey !== (process.env.ADMIN_KEY || 'admin123')) {
-    return res.status(403).json({
-      error: 'Admin access required',
-      message: 'Provide valid admin key'
-    });
-  }
-  
   next();
 }
 
