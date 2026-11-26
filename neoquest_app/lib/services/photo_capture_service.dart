@@ -83,15 +83,14 @@ class PhotoCaptureService {
   /// Request camera permissions
   Future<bool> requestCameraPermissions() async {
     try {
+      // Fotos landen im App-eigenen Ordner (getApplicationDocumentsDirectory),
+      // dafuer ist keine Speicher-Berechtigung noetig. Permission.storage wird
+      // ab Android 13 immer abgelehnt und darf die Kamera nicht blockieren.
       final cameraStatus = await Permission.camera.request();
-      final storageStatus = await Permission.storage.request();
-      
-      bool hasPermissions = cameraStatus.isGranted && storageStatus.isGranted;
-      
+
       print('📷 Camera permission: $cameraStatus');
-      print('💾 Storage permission: $storageStatus');
-      
-      return hasPermissions;
+
+      return cameraStatus.isGranted;
     } catch (e) {
       print('❌ Error requesting camera permissions: $e');
       return false;
