@@ -91,9 +91,12 @@ In `neoquest_server\.env` eintragen:
 
 - `DB_PASSWORD`: dasselbe Passwort wie in `neoquest_db\.env`
 - `JWT_SECRET`: eine lange, zufällige Zeichenkette
-- `ADMIN_KEY`: ein eigener Admin-Schlüssel für die Spielleitungs-Befehle aus Abschnitt 3. Fehlt die Zeile in der Vorlage, einfach ergänzen.
+- `ADMIN_KEY`: ein eigener, langer Admin-Schlüssel für die Spielleitungs-Befehle aus Abschnitt 3. **Pflicht:** Ohne ihn sind alle Admin-Funktionen gesperrt. Einen zufälligen Schlüssel anhängen, ohne ihn anzuzeigen:
+  ```powershell
+  Add-Content .env ("ADMIN_KEY=" + (node -e "process.stdout.write(require('crypto').randomBytes(32).toString('hex'))"))
+  ```
 - `ALLOWED_IP_RANGES`: das eigene WLAN, z. B. `10.0.0.0/24` oder `192.168.1.0/24`. Der Server prüft das nur bei `NODE_ENV=production`, bei `development` sind alle Adressen zugelassen.
-- `RATE_LIMIT_MAX_REQUESTS`: erlaubte Anfragen pro Gerät in 15 Minuten. Der Standard von 100 ist für ein Spiel viel zu knapp, weil die App im Warteraum und beim Countdown alle 1–2 Sekunden den Status abfragt. Für ein Spiel `RATE_LIMIT_MAX_REQUESTS=2000` eintragen.
+- `RATE_LIMIT_MAX_REQUESTS`: erlaubte Anfragen pro Gerät in 15 Minuten, empfohlen `1000`. Die Statusabfragen der App im Warteraum und die Admin-Befehle zählen nicht mit.
 
 Server starten und prüfen:
 
@@ -370,8 +373,9 @@ Nach dem Upload zeigt die **Leaderboard** die Platzierungen aller, die das Spiel
 | `.env fehlt` beim Serverstart | Server-Konfiguration fehlt | `.env.example` nach `.env` kopieren und ausfüllen (A 1.3) |
 | App findet den Server nicht | anderes WLAN, Firewall, falsche IP | gleiches WLAN prüfen, Firewall-Regel (A 1.4), IP aus dem Health-Check manuell eingeben |
 | Server antwortet mit `Access denied` | Handy-IP liegt nicht in `ALLOWED_IP_RANGES` (nur bei `NODE_ENV=production`) | eigenes WLAN-Netz in `neoquest_server\.env` eintragen, Server neu starten |
-| `Too many requests from this IP` | Anfrage-Limit pro Gerät erreicht, meist durch die Statusabfragen im Warteraum | `RATE_LIMIT_MAX_REQUESTS=2000` in `neoquest_server\.env` (A 1.3), Server neu starten. Ein Neustart setzt das Limit auch sofort zurück. |
-| `Admin access required` | falscher oder fehlender Admin-Schlüssel | `ADMIN_KEY` in `neoquest_server\.env` prüfen, `$h` neu setzen |
+| `Too many requests from this IP` | Anfrage-Limit pro Gerät erreicht | `RATE_LIMIT_MAX_REQUESTS` in `neoquest_server\.env` erhöhen (A 1.3), Server neu starten. Ein Neustart setzt das Limit auch sofort zurück. |
+| `Admin access required` (403) | falscher oder fehlender Admin-Schlüssel | `ADMIN_KEY` in `neoquest_server\.env` prüfen, `$h` neu setzen |
+| `Admin access not configured` (503) | `ADMIN_KEY` fehlt in `neoquest_server\.env` | Schlüssel ergänzen (A 1.3), Server neu starten |
 | QR-Code wird nicht erkannt | Licht, Kamera-Berechtigung | Berechtigung in den Android-Einstellungen erlauben oder **Manuelle Eingabe** |
 | Kompass bewegt sich nicht | Standort aus oder nicht erlaubt | GPS einschalten, Standort-Berechtigung erlauben, möglichst im Freien |
 | App bleibt im Warteraum | Spielleitung hat noch nicht gestartet | Countdown starten (A 3.2), Status mit `/api/session/status` prüfen |
